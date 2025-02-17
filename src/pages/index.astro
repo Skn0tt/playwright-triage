@@ -1,11 +1,125 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Item from "../components/Item.astro";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+export const prerender = false;
+
+const query = `
+{
+  repository(owner: "microsoft", name: "playwright") {
+    issues(
+      orderBy: {field: CREATED_AT, direction: DESC}
+      states: OPEN
+      first: 100
+    ) {
+      totalCount
+      nodes {
+        titleHTML
+        url
+        createdAt
+        author {
+          login
+        }
+        labels {
+          totalCount
+        }
+        assignees {
+          totalCount
+        }
+        comments(last: 100) {
+          nodes {
+            createdAt
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+    
+    pullRequests(
+      orderBy: {field: CREATED_AT, direction: DESC}
+      states: OPEN
+      first: 100
+    ) {
+      totalCount
+      nodes {
+        titleHTML
+        url
+        createdAt
+        author {
+          login
+        }
+        labels {
+          totalCount
+        }
+        assignees {
+          totalCount
+        }
+        comments(last: 100) {
+          nodes {
+            createdAt
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+const response = await fetch("https://api.github.com/graphql", {
+  method: "POST",
+  body: JSON.stringify({ query }),
+  headers: {
+    Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN}`,
+  },
+});
+const {
+  data: {
+    repository: {
+      issues: { nodes: issues },
+	  pullRequests: { nodes: pullRequests }
+    },
+  },
+} = await response.json();
+
+function filterNotTriaged(item) {
+  return item.labels.totalCount === 0 && item.assignees.totalCount === 0;
+}
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<style>
+  body {
+    font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
+    color: #222;
+  }
+</style>
+
+<div
+  style={{ marginBottom: 20, padding: 10, background: "black", color: "#ccc" }}
+>
+  ISSUES
+</div>
+{
+  issues
+    .filter(filterNotTriaged)
+    .map((issue) => <Item item={issue} />)
+}
+<div
+  style={{
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 10,
+    background: "black",
+    color: "#ccc",
+  }}
+>
+  PULL REQUESTS
+</div>
+{
+	pullRequests
+	  .filter(filterNotTriaged)
+	  .map((pullRequest) => <Item item={pullRequest} />)
+  }

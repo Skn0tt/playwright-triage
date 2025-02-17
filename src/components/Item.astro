@@ -1,0 +1,65 @@
+---
+const { item } = Astro.props;
+
+function isMaintainer(login: string) {
+  return [
+    "dgozman",
+    "mxschmitt",
+    "yury-s",
+    "pavelfeldman",
+    "Skn0tt",
+    "agg23",
+  ].includes(login);
+}
+
+const comments = [item, ...item.comments.nodes]
+
+const lastComment = comments[comments.length - 1];
+const attention = !isMaintainer(lastComment.author.login);
+
+const date = new Date(lastComment.created_at);
+const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+---
+
+<style>
+  .item {
+    margin-top: 20px;
+  }
+
+  .item-title {
+    font-weight: bold;
+    margin: 4px 0;
+  }
+
+  .item-comment-user {
+    margin-right: 10px;
+    min-width: 150px;
+    display: inline-block;
+  }
+</style>
+
+<div class="item">
+  <div>
+    <a href={item.url} class="item-url">
+      {item.url}
+    </a>
+  </div>
+  {item.titleHTML}
+  <div class="item-title">{item.title}</div>
+  {
+    comments.map((comment) => {
+      const user = comment.author.login;
+      let color = isMaintainer(user) ? "green" : "inherit";
+      if (comment === lastComment) {
+        if (attention) color = "red";
+        else if (stale) color = "brown";
+      }
+      return (
+        <div style={{ color }}>
+          <span class="item-comment-user">{user}</span>
+          {comment.createdAt}
+        </div>
+      );
+    })
+  }
+</div>
