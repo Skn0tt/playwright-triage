@@ -1,4 +1,5 @@
 ---
+import moment from 'moment';
 const { item } = Astro.props;
 
 function isMaintainer(login: string) {
@@ -17,7 +18,7 @@ const comments = [item, ...item.comments.nodes]
 const lastComment = comments[comments.length - 1];
 const attention = !isMaintainer(lastComment.author.login);
 
-const date = new Date(lastComment.created_at);
+const date = new Date(lastComment.createdAt);
 const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 ---
 
@@ -57,7 +58,7 @@ const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       return (
         <div style={{ color }}>
           <span class="item-comment-user">{user}</span>
-          {comment.createdAt}
+          {moment(new Date(comment.createdAt)).fromNow()}
         </div>
       );
     })
