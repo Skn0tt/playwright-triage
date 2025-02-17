@@ -13,7 +13,12 @@ function isMaintainer(login: string) {
   ].includes(login);
 }
 
-const comments = [item, ...item.comments.nodes]
+const comments = [
+  item,
+  ...item.comments.nodes,
+  ...(item.reviews?.nodes ?? [])
+].filter(({ author }) => author.login !== "github-actions")
+.sort((a, b) => b.createdAt - a.createdAt);
 
 const lastComment = comments[comments.length - 1];
 const attention = !isMaintainer(lastComment.author.login);
@@ -45,8 +50,7 @@ const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       {item.url}
     </a>
   </div>
-  {item.titleHTML}
-  <div class="item-title">{item.title}</div>
+  <div class="item-title" set:html={item.titleHTML}/>
   {
     comments.map((comment) => {
       const user = comment.author.login;

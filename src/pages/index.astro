@@ -63,6 +63,14 @@ const query = `
             }
           }
         }
+        reviews(last: 100) {
+          nodes {
+            createdAt
+            author {
+              login
+            }
+          }
+        }
       }
     }
   }
