@@ -1,18 +1,12 @@
 ---
-import moment from 'moment';
-import { type Ticket, isMaintainer } from '../utils';
+import { formatDistanceToNowStrict } from "date-fns"
+import { type Ticket, isMaintainer, isStale, requiresAttention } from '../utils';
 
 export interface Props {
   ticket: Ticket;
 }
 
 const { ticket } = Astro.props;
-
-const lastComment = ticket.comments[ticket.comments.length - 1];
-const attention = !isMaintainer(lastComment.author);
-
-const date = new Date(lastComment.createdAt);
-const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 ---
 
 <style>
@@ -40,16 +34,17 @@ const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
   </div>
   <div class="item-title" set:html={ticket.titleHTML}/>
   {
-    ticket.comments.map((comment) => {
+    ticket.comments.map((comment, index) => {
       let color = isMaintainer(comment.author) ? "green" : "inherit";
-      if (comment === lastComment) {
-        if (attention) color = "red";
-        else if (stale) color = "brown";
+      const isLastComment = index === ticket.comments.length - 1;
+      if (isLastComment) {
+        if (requiresAttention(ticket)) color = "red";
+        else if (isStale(ticket)) color = "brown";
       }
       return (
         <div style={{ color }}>
           <span class="item-comment-user">{comment.author}</span>
-          {moment(new Date(comment.createdAt)).fromNow()}
+          {formatDistanceToNowStrict(comment.createdAt, { addSuffix: true })}
         </div>
       );
     })

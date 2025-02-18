@@ -1,3 +1,5 @@
+import { differenceInBusinessDays } from "date-fns";
+
 export interface Ticket {
     url: string;
     titleHTML: string;
@@ -28,7 +30,8 @@ export function requiresAttention(ticket: Ticket) {
 
 export function isStale(ticket: Ticket) {
   const lastComment = ticket.comments[ticket.comments.length - 1]
-  return lastComment.createdAt < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+  return differenceInBusinessDays(new Date(), lastComment.createdAt) > 3;
 }
 
 export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticket[] }> {
