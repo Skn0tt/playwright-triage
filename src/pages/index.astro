@@ -25,16 +25,16 @@ const { issues, pullRequests } = await getData();
 </style>
 
 <div
-  style={{ marginBottom: 20, padding: 10, background: "black", color: "#ccc" }}
+  style={{ marginBottom: "20px", padding: "10px", background: "black", color: "#ccc" }}
 >
   ISSUES
 </div>
 {issues.filter(filterNotTriaged).sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
 <div
   style={{
-    marginTop: 20,
-    marginBottom: 20,
-    padding: 10,
+    marginTop: "20px",
+    marginBottom: "20px",
+    padding: "10px",
     background: "black",
     color: "#ccc",
   }}
