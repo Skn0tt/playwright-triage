@@ -21,6 +21,16 @@ export function isMaintainer(login: string) {
     ].includes(login);
 }
 
+export function requiresAttention(ticket: Ticket) {
+  const lastComment = ticket.comments[ticket.comments.length - 1];
+  return !isMaintainer(lastComment.author);
+}
+
+export function isStale(ticket: Ticket) {
+  const lastComment = ticket.comments[ticket.comments.length - 1]
+  return lastComment.createdAt < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+}
+
 export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticket[] }> {
     const query = `
     {

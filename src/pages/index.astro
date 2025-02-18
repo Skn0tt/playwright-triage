@@ -1,11 +1,17 @@
 ---
 import Ticket from "../components/Ticket.astro";
-import { getData, type Ticket as ITicket } from "../utils";
+import { getData, type Ticket as ITicket, requiresAttention, isStale } from "../utils";
 
 export const prerender = false;
 
 function filterNotTriaged(ticket: ITicket) {
   return ticket.labelCount === 0 && ticket.assigneeCount === 0;
+}
+
+function compare(a: ITicket, b: ITicket) {
+  const scoreA = (requiresAttention(a) ? 2 : 0) + (isStale(a) ? 1 : 0);
+  const scoreB = (requiresAttention(b) ? 2 : 0) + (isStale(b) ? 1 : 0);
+  return scoreB - scoreA;
 }
 
 const { issues, pullRequests } = await getData();
@@ -23,7 +29,7 @@ const { issues, pullRequests } = await getData();
 >
   ISSUES
 </div>
-{issues.filter(filterNotTriaged).map((ticket) => <Ticket ticket={ticket} />)}
+{issues.filter(filterNotTriaged).sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
 <div
   style={{
     marginTop: 20,
@@ -38,5 +44,6 @@ const { issues, pullRequests } = await getData();
 {
   pullRequests
     .filter(filterNotTriaged)
+    .sort(compare)
     .map((ticket) => <Ticket ticket={ticket} />)
 }
