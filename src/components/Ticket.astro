@@ -1,0 +1,57 @@
+---
+import moment from 'moment';
+import { type Ticket, isMaintainer } from '../utils';
+
+export interface Props {
+  ticket: Ticket;
+}
+
+const { ticket } = Astro.props;
+
+const lastComment = ticket.comments[ticket.comments.length - 1];
+const attention = !isMaintainer(lastComment.author);
+
+const date = new Date(lastComment.createdAt);
+const stale = date < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+---
+
+<style>
+  .item {
+    margin-top: 20px;
+  }
+
+  .item-title {
+    font-weight: bold;
+    margin: 4px 0;
+  }
+
+  .item-comment-user {
+    margin-right: 10px;
+    min-width: 150px;
+    display: inline-block;
+  }
+</style>
+
+<div class="item">
+  <div>
+    <a href={ticket.url} class="item-url">
+      {ticket.url}
+    </a>
+  </div>
+  <div class="item-title" set:html={ticket.titleHTML}/>
+  {
+    ticket.comments.map((comment) => {
+      let color = isMaintainer(comment.author) ? "green" : "inherit";
+      if (comment === lastComment) {
+        if (attention) color = "red";
+        else if (stale) color = "brown";
+      }
+      return (
+        <div style={{ color }}>
+          <span class="item-comment-user">{comment.author}</span>
+          {moment(new Date(comment.createdAt)).fromNow()}
+        </div>
+      );
+    })
+  }
+</div>

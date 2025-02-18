@@ -1,101 +1,14 @@
 ---
-import Item from "../components/Item.astro";
+import Ticket from "../components/Ticket.astro";
+import { getData, type Ticket as ITicket } from "../utils";
 
 export const prerender = false;
 
-const query = `
-{
-  repository(owner: "microsoft", name: "playwright") {
-    issues(
-      orderBy: {field: CREATED_AT, direction: DESC}
-      states: OPEN
-      first: 100
-    ) {
-      totalCount
-      nodes {
-        titleHTML
-        url
-        createdAt
-        author {
-          login
-        }
-        labels {
-          totalCount
-        }
-        assignees {
-          totalCount
-        }
-        comments(last: 100) {
-          nodes {
-            createdAt
-            author {
-              login
-            }
-          }
-        }
-      }
-    }
-    
-    pullRequests(
-      orderBy: {field: CREATED_AT, direction: DESC}
-      states: OPEN
-      first: 100
-    ) {
-      totalCount
-      nodes {
-        titleHTML
-        url
-        createdAt
-        author {
-          login
-        }
-        labels {
-          totalCount
-        }
-        assignees {
-          totalCount
-        }
-        comments(last: 100) {
-          nodes {
-            createdAt
-            author {
-              login
-            }
-          }
-        }
-        reviews(last: 100) {
-          nodes {
-            createdAt
-            author {
-              login
-            }
-          }
-        }
-      }
-    }
-  }
+function filterNotTriaged(ticket: ITicket) {
+  return ticket.labelCount === 0 && ticket.assigneeCount === 0;
 }
-`;
 
-const response = await fetch("https://api.github.com/graphql", {
-  method: "POST",
-  body: JSON.stringify({ query }),
-  headers: {
-    Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN}`,
-  },
-});
-const {
-  data: {
-    repository: {
-      issues: { nodes: issues },
-	  pullRequests: { nodes: pullRequests }
-    },
-  },
-} = await response.json();
-
-function filterNotTriaged(item) {
-  return item.labels.totalCount === 0 && item.assignees.totalCount === 0;
-}
+const { issues, pullRequests } = await getData();
 ---
 
 <style>
@@ -110,11 +23,7 @@ function filterNotTriaged(item) {
 >
   ISSUES
 </div>
-{
-  issues
-    .filter(filterNotTriaged)
-    .map((issue) => <Item item={issue} />)
-}
+{issues.filter(filterNotTriaged).map((ticket) => <Ticket ticket={ticket} />)}
 <div
   style={{
     marginTop: 20,
@@ -127,7 +36,7 @@ function filterNotTriaged(item) {
   PULL REQUESTS
 </div>
 {
-	pullRequests
-	  .filter(filterNotTriaged)
-	  .map((pullRequest) => <Item item={pullRequest} />)
-  }
+  pullRequests
+    .filter(filterNotTriaged)
+    .map((ticket) => <Ticket ticket={ticket} />)
+}
