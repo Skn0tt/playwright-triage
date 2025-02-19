@@ -1,4 +1,10 @@
 import { differenceInBusinessDays } from "date-fns";
+import { Octokit } from '@octokit/core';
+
+const octokit = new Octokit({
+  auth: import.meta.env.GITHUB_TOKEN,
+});
+
 
 export interface Ticket {
     url: string;
@@ -34,96 +40,90 @@ export function isStale(ticket: Ticket) {
   return differenceInBusinessDays(new Date(), lastComment.createdAt) > 3;
 }
 
+export async function getTicketNumbers(is: 'issue' | 'pull-request'): Promise<number[]> {
+  const per_page = 100;
+  const items = [];
+  for (let page = 1; page < 100; ++page) {
+    const result = await octokit.request(`GET /search/issues`, {
+      q: `repo:microsoft/playwright state:open is:${is} no:label no:assignee`,
+      page,
+      per_page,
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    items.push(...result.data.items);
+    if (result.data.items.length < per_page)
+      break;
+  }
+  return items.map(item => item.number);
+}
+
 export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticket[] }> {
+    const [issueNumbers, pullRequestNumbers] = await Promise.all([
+      getTicketNumbers('issue'),
+      getTicketNumbers('pull-request')
+    ]);
     const query = `
-    {
-      repository(owner: "microsoft", name: "playwright") {
-        issues(
-          orderBy: {field: CREATED_AT, direction: DESC}
-          states: OPEN
-          first: 100
-        ) {
-          totalCount
-          nodes {
-            titleHTML
-            url
-            createdAt
-            author {
-              login
-            }
-            labels {
-              totalCount
-            }
-            assignees {
-              totalCount
-            }
-            comments(last: 100) {
-              nodes {
-                createdAt
-                author {
-                  login
-                }
-              }
-            }
-          }
-        }
-        
-        pullRequests(
-          orderBy: {field: CREATED_AT, direction: DESC}
-          states: OPEN
-          first: 100
-        ) {
-          totalCount
-          nodes {
-            titleHTML
-            url
-            createdAt
-            author {
-              login
-            }
-            labels {
-              totalCount
-            }
-            assignees {
-              totalCount
-            }
-            comments(last: 100) {
-              nodes {
-                createdAt
-                author {
-                  login
-                }
-              }
-            }
-            reviews(last: 100) {
-              nodes {
-                createdAt
-                author {
-                  login
-                }
-              }
-            }
+    fragment IssueParts on Issue {
+      titleHTML
+      url
+      createdAt
+      author {
+        login
+      }
+      labels {
+        totalCount
+      }
+      assignees {
+        totalCount
+      }
+      comments(last: 100) {
+        nodes {
+          createdAt
+          author {
+            login
           }
         }
       }
     }
+    fragment PullRequestParts on PullRequest {
+      titleHTML
+      url
+      createdAt
+      author {
+        login
+      }
+      labels {
+        totalCount
+      }
+      assignees {
+        totalCount
+      }
+      comments(last: 100) {
+        nodes {
+          createdAt
+          author {
+            login
+          }
+        }
+      }
+      reviews(last: 100) {
+        nodes {
+          createdAt
+          author {
+            login
+          }
+        }
+      }
+    }
+    query {
+      repository(owner: "microsoft", name: "playwright") {
+        ${issueNumbers.map((number, index) => `issue${index}: issue(number: ${number}) { ...IssueParts }`).join('\n')}
+        ${pullRequestNumbers.map((number, index) => `pullRequest${index}: pullRequest(number: ${number}) { ...PullRequestParts }`).join('\n')}
+      }
+    }
     `;
-    
-    const response = await fetch("https://api.github.com/graphql", {
-      method: "POST",
-      body: JSON.stringify({ query }),
-      headers: {
-        Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN}`,
-      },
-    });
-    const {
-      data: {
-        repository: {
-          issues: { nodes: issues },
-          pullRequests: { nodes: pullRequests }
-        },
-      },
-    } = await response.json();
 
     function toTicket(issue: any): Ticket {
       const comments = [
@@ -146,8 +146,16 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       };
     }
 
-    return {
-      issues: issues.map(toTicket),
-      pullRequests: pullRequests.map(toTicket)
-    };
+    const { repository } = await octokit.graphql<any>(query)
+    const issues: Ticket[] = [];
+    const pullRequests: Ticket[] = [];
+    for (const [key, value] of Object.entries(repository)) {
+      if (key.startsWith('issue')) {
+        issues.push(toTicket(value));
+      } else if (key.startsWith('pullRequest')) {
+        pullRequests.push(toTicket(value));
+      }
+    }
+
+    return { issues, pullRequests };
 }
