@@ -51,7 +51,7 @@ export async function getTicketNumbers(is: 'issue' | 'pull-request'): Promise<nu
   const items = [];
   for (let page = 1; page < 100; ++page) {
     const result = await octokit.request(`GET /search/issues`, {
-      q: `repo:microsoft/playwright state:open is:${is} no:label no:assignee`,
+      q: `repo:microsoft/playwright state:open is:${is} no:label`,
       page,
       per_page,
       headers: {
