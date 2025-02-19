@@ -29,6 +29,12 @@ export function isMaintainer(login: string) {
     ].includes(login);
 }
 
+export function isBot(login: string) {
+  return [
+      "github-actions",
+  ].includes(login);
+}
+
 export function requiresAttention(ticket: Ticket) {
   const lastComment = ticket.comments[ticket.comments.length - 1];
   return !isMaintainer(lastComment.author);
@@ -135,7 +141,8 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
         .map((c) => ({
           author: c.author.login,
           createdAt: new Date(c.createdAt),
-        }));
+        }))
+        .filter((c) => !isBot(c.author));
 
       return {
         ...issue,
