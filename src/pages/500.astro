@@ -7,6 +7,7 @@ interface Props {
 
 const { error } = Astro.props
 
+console.log(error)
 let message = error instanceof Error ? error.message : 'Unknown error';
 if (message.includes('rate limit')) {
     const reset = error.response.headers['x-ratelimit-reset'];
