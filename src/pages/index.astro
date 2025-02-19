@@ -4,10 +4,6 @@ import { getData, type Ticket as ITicket, requiresAttention, isStale } from "../
 
 export const prerender = false;
 
-function filterNotTriaged(ticket: ITicket) {
-  return ticket.labelCount === 0 && ticket.assigneeCount === 0;
-}
-
 function compare(a: ITicket, b: ITicket) {
   const scoreA = (requiresAttention(a) ? 2 : 0) + (isStale(a) ? 1 : 0);
   const scoreB = (requiresAttention(b) ? 2 : 0) + (isStale(b) ? 1 : 0);
@@ -29,7 +25,7 @@ const { issues, pullRequests } = await getData();
 >
   ISSUES
 </div>
-{issues.filter(filterNotTriaged).sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
+{issues.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
 <div
   style={{
     marginTop: "20px",
@@ -43,7 +39,6 @@ const { issues, pullRequests } = await getData();
 </div>
 {
   pullRequests
-    .filter(filterNotTriaged)
     .sort(compare)
     .map((ticket) => <Ticket ticket={ticket} />)
 }
