@@ -42,3 +42,8 @@ const { issues, pullRequests } = await getData();
     .sort(compare)
     .map((ticket) => <Ticket ticket={ticket} />)
 }
+
+<footer style={{ margin: '24px 0px' }}>
+  <hr/>
+  <a href="https://github.com/skn0tt/playwright-triage">Sources</a>
+</footer>
