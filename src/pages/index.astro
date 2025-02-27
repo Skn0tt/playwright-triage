@@ -13,37 +13,44 @@ function compare(a: ITicket, b: ITicket) {
 const { issues, pullRequests } = await getData();
 ---
 
-<style>
-  body {
-    font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
-    color: #222;
-  }
-</style>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
+        color: #222;
+      }
+    </style>
 
-<div
-  style={{ marginBottom: "20px", padding: "10px", background: "black", color: "#ccc" }}
->
-  ISSUES
-</div>
-{issues.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
-<div
-  style={{
-    marginTop: "20px",
-    marginBottom: "20px",
-    padding: "10px",
-    background: "black",
-    color: "#ccc",
-  }}
->
-  PULL REQUESTS
-</div>
-{
-  pullRequests
-    .sort(compare)
-    .map((ticket) => <Ticket ticket={ticket} />)
-}
-
-<footer style={{ margin: '24px 0px' }}>
-  <hr/>
-  <a href="https://github.com/skn0tt/playwright-triage">Sources</a>
-</footer>
+    <div
+      style={{ marginBottom: "20px", padding: "10px", background: "black", color: "#ccc" }}
+    >
+      ISSUES
+    </div>
+    {issues.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
+    <div
+      style={{
+        marginTop: "20px",
+        marginBottom: "20px",
+        padding: "10px",
+        background: "black",
+        color: "#ccc",
+      }}
+    >
+      PULL REQUESTS
+    </div>
+    {
+      pullRequests
+        .sort(compare)
+        .map((ticket) => <Ticket ticket={ticket} />)
+    }
+    <footer style={{ margin: '24px 0px' }}>
+      <hr/>
+      <a href="https://github.com/skn0tt/playwright-triage">Sources</a>
+    </footer>
+  </body>
+</html>
