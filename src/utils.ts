@@ -117,7 +117,6 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       const comments = [
         issue,
         ...issue.comments.nodes,
-        ...(issue.reviews?.nodes ?? []),
       ]
         .sort((a, b) => b.createdAt - a.createdAt)
         .map((c) => ({
