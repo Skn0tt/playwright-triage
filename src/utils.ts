@@ -46,32 +46,10 @@ export function isStale(ticket: Ticket) {
   return differenceInBusinessDays(new Date(), lastComment.createdAt) > 3;
 }
 
-export async function getTicketNumbers(is: 'issue' | 'pull-request'): Promise<number[]> {
-  const per_page = 100;
-  const items = [];
-  for (let page = 1; page < 100; ++page) {
-    const result = await octokit.request(`GET /search/issues`, {
-      q: `repo:microsoft/playwright state:open is:${is} no:label`,
-      page,
-      per_page,
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    });
-    items.push(...result.data.items);
-    if (result.data.items.length < per_page)
-      break;
-  }
-  return items.map(item => item.number);
-}
-
 export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticket[] }> {
-    const [issueNumbers, pullRequestNumbers] = await Promise.all([
-      getTicketNumbers('issue'),
-      getTicketNumbers('pull-request')
-    ]);
     const query = `
     fragment IssueParts on Issue {
+      __typename
       titleHTML
       url
       createdAt
@@ -94,6 +72,7 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       }
     }
     fragment PullRequestParts on PullRequest {
+      __typename
       titleHTML
       url
       createdAt
@@ -123,10 +102,13 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
         }
       }
     }
+      
     query {
-      repository(owner: "microsoft", name: "playwright") {
-        ${issueNumbers.map((number, index) => `issue${index}: issue(number: ${number}) { ...IssueParts }`).join('\n')}
-        ${pullRequestNumbers.map((number, index) => `pullRequest${index}: pullRequest(number: ${number}) { ...PullRequestParts }`).join('\n')}
+      search(query: "repo:microsoft/playwright state:open no:label", type: ISSUE, first: 100) {
+        nodes {
+          ... on Issue { ...IssueParts }
+          ... on PullRequest { ...PullRequestParts }
+        }
       }
     }
     `;
@@ -153,14 +135,19 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       };
     }
 
-    const { repository } = await octokit.graphql<any>(query)
+    const { search: { nodes: tickets } } = await octokit.graphql<any>(query)
     const issues: Ticket[] = [];
     const pullRequests: Ticket[] = [];
-    for (const [key, value] of Object.entries(repository)) {
-      if (key.startsWith('issue')) {
-        issues.push(toTicket(value));
-      } else if (key.startsWith('pullRequest')) {
-        pullRequests.push(toTicket(value));
+    for (const ticket of tickets) {
+      switch (ticket.__typename) {
+        case 'Issue':
+          issues.push(toTicket(ticket));
+          break;
+        case 'PullRequest':
+          pullRequests.push(toTicket(ticket));
+          break;
+        default:
+          throw new Error(`Unknown ticket type: ${ticket.__typename}`);
       }
     }
 
