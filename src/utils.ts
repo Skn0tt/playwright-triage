@@ -1,6 +1,11 @@
 import { differenceInBusinessDays } from "date-fns";
 import { Octokit } from '@octokit/core';
 
+import gql from 'graphql-tag';
+import { print } from 'graphql';
+
+import type { Issue, PullRequest } from "@octokit/graphql-schema";
+
 const octokit = new Octokit({
   auth: import.meta.env.GITHUB_TOKEN,
 });
@@ -47,7 +52,7 @@ export function isStale(ticket: Ticket) {
 }
 
 export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticket[] }> {
-    const query = `
+    const query = gql`
     fragment IssueParts on Issue {
       __typename
       titleHTML
@@ -104,51 +109,43 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
     }
       
     query {
-      search(query: "repo:microsoft/playwright state:open no:label", type: ISSUE, first: 100) {
+      issues: search(query: "repo:microsoft/playwright state:open no:label is:issue", type: ISSUE, first: 100) {
         nodes {
           ... on Issue { ...IssueParts }
+        }
+      }
+      pullRequests: search(query: "repo:microsoft/playwright state:open no:label is:pr -is:draft", type: ISSUE, first: 100) {
+        nodes {
           ... on PullRequest { ...PullRequestParts }
         }
       }
     }
     `;
 
-    function toTicket(issue: any): Ticket {
+    function toTicket(issue: Issue | PullRequest): Ticket {
       const comments = [
         issue,
-        ...issue.comments.nodes,
+        ...(issue.comments.nodes ?? []),
+        ...(issue.__typename === 'PullRequest' ? issue.reviews?.nodes ?? [] : []),
       ]
-        .sort((a, b) => b.createdAt - a.createdAt)
+        .sort((a, b) => b!.createdAt - a!.createdAt)
         .map((c) => ({
-          author: c.author.login,
-          createdAt: new Date(c.createdAt),
+          author: c!.author?.login!,
+          createdAt: new Date(c!.createdAt),
         }))
-        .filter((c) => !isBot(c.author));
+        .filter((c) => !isBot(c.author!));
 
       return {
         ...issue,
         createdAt: new Date(issue.createdAt),
         assigneeCount: issue.assignees.totalCount,
-        labelCount: issue.labels.totalCount,
+        labelCount: issue.labels?.totalCount ?? 0,
         comments,
       };
     }
 
-    const { search: { nodes: tickets } } = await octokit.graphql<any>(query)
-    const issues: Ticket[] = [];
-    const pullRequests: Ticket[] = [];
-    for (const ticket of tickets) {
-      switch (ticket.__typename) {
-        case 'Issue':
-          issues.push(toTicket(ticket));
-          break;
-        case 'PullRequest':
-          pullRequests.push(toTicket(ticket));
-          break;
-        default:
-          throw new Error(`Unknown ticket type: ${ticket.__typename}`);
-      }
-    }
-
+    const { issues: { nodes: ticketNodes }, pullRequests: { nodes: pullRequestNodes } } = await octokit.graphql<{ issues: { nodes: Issue[] }; pullRequests: { nodes: PullRequest[] } }>(print(query))
+    const issues: Ticket[] = ticketNodes.map(toTicket);
+    const pullRequests: Ticket[] = pullRequestNodes.map(toTicket);
     return { issues, pullRequests };
 }
