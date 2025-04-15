@@ -128,11 +128,11 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
         ...(issue.comments.nodes ?? []),
         ...(issue.__typename === 'PullRequest' ? issue.reviews?.nodes ?? [] : []),
       ]
-        .sort((a, b) => b!.createdAt - a!.createdAt)
         .map((c) => ({
           author: c!.author?.login!,
           createdAt: new Date(c!.createdAt),
         }))
+        .sort((a, b) => +a!.createdAt - +b!.createdAt)
         .filter((c) => !isBot(c.author!));
 
       return {
