@@ -17,7 +17,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
+      - uses: actions/setup-node@v4
+        with:
+            node-version: '22'
+            cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Start Webserver
+        run: npm run dev &
+        env:
+            GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
@@ -25,4 +34,4 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           allowed_tools: mcp__playwright__browser_snapshot,mcp__playwright__browser_click,mcp__playwright__browser_drag,mcp__playwright__browser_hover,mcp__playwright__browser_type,mcp__playwright__browser_select_option,mcp__playwright__browser_press_key,mcp__playwright__browser_wait_for,mcp__playwright__browser_file_upload,mcp__playwright__browser_handle_dialog,mcp__playwright__browser_navigate,mcp__playwright__browser_navigate_back,mcp__playwright__browser_navigate_forward,mcp__playwright__browser_take_screenshot,mcp__playwright__browser_pdf_save,mcp__playwright__browser_network_requests,mcp__playwright__browser_console_messages,mcp__playwright__browser_install,mcp__playwright__browser_close,mcp__playwright__browser_resize,mcp__playwright__browser_tab_list,mcp__playwright__browser_tab_new,mcp__playwright__browser_tab_select,mcp__playwright__browser_tab_close,mcp__playwright__browser_generate_playwright_test,mcp__playwright__browser_screen_capture,mcp__playwright__browser_screen_move_mouse,mcp__playwright__browser_screen_click,mcp__playwright__browser_screen_drag,mcp__playwright__browser_screen_type,mcp__playwright__browser_press_key,mcp__playwright__browser_wait_for,mcp__playwright__browser_file_upload,mcp__playwright__browser_handle_dialog
           direct_prompt: "Take a look at the PR diff. If it makes visual changes, please open them up in a browser and post screenshots of the changes in the PR comment."
-          custom_instructions: "When asked to post a screenshot to GitHub, but you only have the raw data, convert it to a data URL like so: ![image title](data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/wAARCAHAAwADASIAAhEBAxEB/8QAGwABAAMBAQEAAAAAAAAAAAAAAAUGAwcCAf/EABcBAQEBAQAAAAAAAAAAAAAAAAABAgP/xAAaEAACAwEAAAAAAAAAAAAAAAABAgMEEiEx/9oADAMBAAIQAxAAAAH//EABcRAQEBAQAAAAAAAAAAAAAAAAEAIf/aAAwDAQACEQMRAD8A+1)"
+          custom_instructions: "The site is running at localhost:4321. Also, when asked to post a screenshot to GitHub, but you only have the raw data, convert it to a data URL like so: ![image title](data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/wAARCAHAAwADASIAAhEBAxEB/8QAGwABAAMBAQEAAAAAAAAAAAAAAAUGAwcCAf/EABcBAQEBAQAAAAAAAAAAAAAAAAABAgP/xAAaEAACAwEAAAAAAAAAAAAAAAABAgMEEiEx/9oADAMBAAIQAxAAAAH//EABcRAQEBAQAAAAAAAAAAAAAAAAEAIf/aAAwDAQACEQMRAD8A+1)"
