@@ -10,43 +10,220 @@ const { ticket } = Astro.props;
 ---
 
 <style>
-  .item {
-    margin-top: 20px;
+  .neural-ticket {
+    background: linear-gradient(135deg, rgba(0, 20, 40, 0.8), rgba(20, 0, 40, 0.8));
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  .item-title {
-    font-weight: bold;
-    margin: 4px 0;
+  .neural-ticket:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--neon-cyan);
+    box-shadow: 
+      0 15px 40px rgba(0, 255, 255, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
-  .item-comment-user {
-    margin-right: 10px;
-    min-width: 150px;
+  .neural-ticket::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-green));
+    background-size: 200% 100%;
+    animation: borderFlow 3s linear infinite;
+  }
+
+  @keyframes borderFlow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+  }
+
+  .ticket-url {
+    color: var(--neon-green);
+    text-decoration: none;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
     display: inline-block;
+    margin-bottom: 15px;
+    position: relative;
+  }
+
+  .ticket-url::before {
+    content: '▶ ';
+    color: var(--neon-cyan);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+  }
+
+  .ticket-url:hover {
+    color: var(--neon-pink);
+    text-shadow: 0 0 15px currentColor;
+    transform: translateX(10px);
+  }
+
+  .ticket-title {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin: 15px 0 20px 0;
+    color: #ffffff;
+    line-height: 1.4;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .comment-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+  }
+
+  .comment-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'Exo 2', monospace;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .comment-item:hover {
+    background: rgba(0, 255, 255, 0.05);
+    padding-left: 15px;
+    border-radius: 10px;
+  }
+
+  .comment-author {
+    min-width: 180px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: relative;
+  }
+
+  .comment-author.maintainer {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .comment-author.maintainer::after {
+    content: ' ⚡';
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .comment-time {
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+
+  .status-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 15px currentColor;
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+
+  .status-indicator.attention {
+    background: var(--neon-pink);
+    animation: urgentPulse 1s ease-in-out infinite;
+  }
+
+  .status-indicator.stale {
+    background: #ff8c00;
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  @keyframes urgentPulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
+  }
+
+  .priority-high {
+    border-color: var(--neon-pink);
+    background: linear-gradient(135deg, rgba(255, 0, 128, 0.1), rgba(0, 20, 40, 0.8));
+  }
+
+  .priority-medium {
+    border-color: #ff8c00;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(0, 20, 40, 0.8));
   }
 </style>
 
-<div class="item">
+<div class={`neural-ticket ${requiresAttention(ticket) ? 'priority-high' : isStale(ticket) ? 'priority-medium' : ''}`}>
+  <div class={`status-indicator ${requiresAttention(ticket) ? 'attention' : isStale(ticket) ? 'stale' : ''}`}></div>
+  
   <div>
-    <a href={ticket.url} class="item-url">
-      {ticket.url}
+    <a href={ticket.url} class="ticket-url">
+      {ticket.url.replace('https://github.com/', '')}
     </a>
   </div>
-  <div class="item-title" set:html={ticket.titleHTML}/>
-  {
-    ticket.comments.map((comment, index) => {
-      let color = isMaintainer(comment.author) ? "green" : "inherit";
-      const isLastComment = index === ticket.comments.length - 1;
-      if (isLastComment) {
-        if (requiresAttention(ticket)) color = "red";
-        else if (isStale(ticket)) color = "brown";
-      }
-      return (
-        <div style={{ color }}>
-          <span class="item-comment-user">{comment.author}</span>
-          {formatDistanceToNowStrict(comment.createdAt, { addSuffix: true })}
-        </div>
-      );
-    })
-  }
+  
+  <div class="ticket-title" set:html={ticket.titleHTML}/>
+  
+  <div class="comment-section">
+    {
+      ticket.comments.map((comment, index) => {
+        const isLastComment = index === ticket.comments.length - 1;
+        let statusClass = '';
+        let color = 'rgba(255, 255, 255, 0.8)';
+        
+        if (isMaintainer(comment.author)) {
+          statusClass = 'maintainer';
+          color = 'var(--neon-green)';
+        } else if (isLastComment) {
+          if (requiresAttention(ticket)) {
+            color = 'var(--neon-pink)';
+          } else if (isStale(ticket)) {
+            color = '#ff8c00';
+          }
+        }
+        
+        return (
+          <div class="comment-item" style={{ color }}>
+            <span class={`comment-author ${statusClass}`}>
+              {comment.author}
+            </span>
+            <span class="comment-time">
+              {formatDistanceToNowStrict(comment.createdAt, { addSuffix: true })}
+            </span>
+          </div>
+        );
+      })
+    }
+  </div>
 </div>
