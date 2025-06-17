@@ -37,6 +37,8 @@ export function isMaintainer(login: string) {
 export function isBot(login: string) {
   return [
       "github-actions",
+      "copilot-pull-request-reviewer",
+      "copilot-swe-agent",
   ].includes(login);
 }
 
