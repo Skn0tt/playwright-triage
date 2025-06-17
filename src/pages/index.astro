@@ -17,42 +17,256 @@ const { issues, pullRequests } = await getData();
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Triage Dashboard</title>
+    <title>NEURAL TRIAGE MATRIX</title>
     <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
   </head>
   <body>
     <style>
+      :root {
+        --neon-cyan: #00ffff;
+        --neon-pink: #ff0080;
+        --neon-green: #00ff41;
+        --dark-bg: #0a0a0a;
+        --darker-bg: #050505;
+        --purple-glow: #8a2be2;
+        --grid-color: rgba(0, 255, 255, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif;
-        color: #222;
+        font-family: 'Exo 2', monospace;
+        background: var(--dark-bg);
+        color: var(--neon-cyan);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Animated background grid */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+          linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: gridPulse 4s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      @keyframes gridPulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.6; }
+      }
+
+      /* Floating particles */
+      body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(2px 2px at 20px 30px, var(--neon-cyan), transparent),
+                    radial-gradient(2px 2px at 40px 70px, var(--neon-pink), transparent),
+                    radial-gradient(1px 1px at 90px 40px, var(--neon-green), transparent),
+                    radial-gradient(1px 1px at 130px 80px, var(--purple-glow), transparent);
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: particleFloat 20s linear infinite;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.4;
+      }
+
+      @keyframes particleFloat {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-200px, -200px); }
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .main-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 3.5rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 50px;
+        background: linear-gradient(45deg, var(--neon-cyan), var(--neon-pink), var(--neon-green));
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradientShift 3s ease-in-out infinite;
+        text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        letter-spacing: 0.1em;
+      }
+
+      @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+
+      .section-header {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        padding: 20px 30px;
+        margin: 40px 0 30px 0;
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 128, 0.1));
+        border: 2px solid var(--neon-cyan);
+        border-radius: 15px;
+        box-shadow: 
+          0 0 30px rgba(0, 255, 255, 0.3),
+          inset 0 0 30px rgba(0, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        animation: sectionGlow 2s ease-in-out infinite alternate;
+      }
+
+      .section-header.issues {
+        border-color: var(--neon-pink);
+        box-shadow: 
+          0 0 30px rgba(255, 0, 128, 0.3),
+          inset 0 0 30px rgba(255, 0, 128, 0.1);
+      }
+
+      .section-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: scanLine 3s linear infinite;
+      }
+
+      @keyframes scanLine {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+
+      @keyframes sectionGlow {
+        0% { text-shadow: 0 0 20px currentColor; }
+        100% { text-shadow: 0 0 40px currentColor, 0 0 60px currentColor; }
+      }
+
+      .ticket-grid {
+        display: grid;
+        gap: 25px;
+        margin-bottom: 50px;
+      }
+
+      .neural-footer {
+        margin: 60px 0 40px 0;
+        padding: 30px;
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(0, 255, 255, 0.1));
+        border: 1px solid var(--purple-glow);
+        border-radius: 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .neural-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+        animation: topBorderGlow 2s ease-in-out infinite;
+      }
+
+      @keyframes topBorderGlow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+
+      .neural-footer a {
+        color: var(--neon-green);
+        text-decoration: none;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .neural-footer a:hover {
+        color: var(--neon-pink);
+        text-shadow: 0 0 20px currentColor;
+        transform: scale(1.05);
+      }
+
+      .neural-footer a::after {
+        content: ' ◊◊◊';
+        margin-left: 10px;
+        animation: symbolPulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes symbolPulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-pink), var(--neon-cyan), transparent);
+        margin: 20px 0;
+        animation: dividerGlow 3s ease-in-out infinite;
+      }
+
+      @keyframes dividerGlow {
+        0%, 100% { opacity: 0.5; filter: blur(1px); }
+        50% { opacity: 1; filter: blur(0px); }
       }
     </style>
 
-    <div
-      style={{ marginBottom: "20px", padding: "10px", background: "black", color: "#ccc" }}
-    >
-      ISSUES
+    <div class="container">
+      <h1 class="main-title">NEURAL TRIAGE MATRIX</h1>
+      
+      <div class="section-header issues">
+        🔴 CRITICAL ISSUES
+      </div>
+      <div class="ticket-grid">
+        {issues.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
+      </div>
+      
+      <div class="section-header">
+        🔄 PULL REQUESTS
+      </div>
+      <div class="ticket-grid">
+        {pullRequests.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
+      </div>
+      
+      <footer class="neural-footer">
+        <div class="divider"></div>
+        <a href="https://github.com/skn0tt/playwright-triage">Access Source Code</a>
+      </footer>
     </div>
-    {issues.sort(compare).map((ticket) => <Ticket ticket={ticket} />)}
-    <div
-      style={{
-        marginTop: "20px",
-        marginBottom: "20px",
-        padding: "10px",
-        background: "black",
-        color: "#ccc",
-      }}
-    >
-      PULL REQUESTS
-    </div>
-    {
-      pullRequests
-        .sort(compare)
-        .map((ticket) => <Ticket ticket={ticket} />)
-    }
-    <footer style={{ margin: '24px 0px' }}>
-      <hr/>
-      <a href="https://github.com/skn0tt/playwright-triage">Sources</a>
-    </footer>
   </body>
 </html>
