@@ -17,6 +17,7 @@ export interface Ticket {
     createdAt: Date;
     labelCount: number;
     assigneeCount: number;
+    assignees: string[];
     comments: {
         author: string;
         createdAt: Date;
@@ -66,8 +67,11 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       labels {
         totalCount
       }
-      assignees {
+      assignees(first: 10) {
         totalCount
+        nodes {
+          login
+        }
       }
       comments(last: 100) {
         nodes {
@@ -89,8 +93,11 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
       labels {
         totalCount
       }
-      assignees {
+      assignees(first: 10) {
         totalCount
+        nodes {
+          login
+        }
       }
       comments(last: 100) {
         nodes {
@@ -142,6 +149,7 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
         createdAt: new Date(issue.createdAt),
         assigneeCount: issue.assignees.totalCount,
         labelCount: issue.labels?.totalCount ?? 0,
+        assignees: (issue.assignees.nodes?.map(a => a?.login).filter((login): login is string => Boolean(login)) ?? []),
         comments,
       };
     }
