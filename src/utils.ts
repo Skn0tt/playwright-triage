@@ -8,7 +8,7 @@ import { print } from 'graphql';
 import type { Issue, PullRequest } from "@octokit/graphql-schema";
 
 let GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN
-if (!import.meta.env.PROD) {
+if (!import.meta.env.PROD && !GITHUB_TOKEN) {
   GITHUB_TOKEN = execSync('gh auth token', { encoding: 'utf8', stdio: 'pipe' }).trim();
   console.log('Using GitHub token from gh CLI');
 }
