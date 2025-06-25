@@ -1,13 +1,20 @@
 import { differenceInBusinessDays } from "date-fns";
 import { Octokit } from '@octokit/core';
+import { execSync } from 'child_process';
 
 import gql from 'graphql-tag';
 import { print } from 'graphql';
 
 import type { Issue, PullRequest } from "@octokit/graphql-schema";
 
+let GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN
+if (!import.meta.env.PROD) {
+  GITHUB_TOKEN = execSync('gh auth token', { encoding: 'utf8', stdio: 'pipe' }).trim();
+  console.log('Using GitHub token from gh CLI');
+}
+
 const octokit = new Octokit({
-  auth: import.meta.env.GITHUB_TOKEN,
+  auth: GITHUB_TOKEN,
 });
 
 
