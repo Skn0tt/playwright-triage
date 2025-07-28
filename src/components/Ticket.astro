@@ -40,7 +40,12 @@ const { ticket } = Astro.props;
     <a href={ticket.url} class="item-url">{ticket.url}</a>
     {ticket.assignees.length > 0 && (
       <span class="item-assignees">
-        Assigned to: {ticket.assignees.map(assignee => <a href={`https://github.com/${assignee}`}>@{assignee}</a>)}
+        Assigned to: {ticket.assignees.map((assignee, index) => (
+          <>
+            <a href={`https://github.com/${assignee}`}>@{assignee}</a>
+            {index < ticket.assignees.length - 1 && " "}
+          </>
+        ))}
       </span>
     )}
   </div>
