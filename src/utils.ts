@@ -130,7 +130,7 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
           ... on Issue { ...IssueParts }
         }
       }
-      pullRequests: search(query: "repo:microsoft/playwright state:open no:label is:pr -is:draft", type: ISSUE, first: 100) {
+      pullRequests: search(query: "repo:microsoft/playwright repo:microsoft/playwright.dev state:open no:label is:pr -is:draft", type: ISSUE, first: 100) {
         nodes {
           ... on PullRequest { ...PullRequestParts }
         }
