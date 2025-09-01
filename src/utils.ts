@@ -125,12 +125,12 @@ export async function getData(): Promise<{ issues: Ticket[], pullRequests: Ticke
     }
       
     query {
-      issues: search(query: "repo:microsoft/playwright state:open no:label is:issue", type: ISSUE, first: 100) {
+      issues: search(query: "(repo:microsoft/playwright OR repo:microsoft/playwright.dev) state:open no:label is:issue", type: ISSUE_ADVANCED, first: 100) {
         nodes {
           ... on Issue { ...IssueParts }
         }
       }
-      pullRequests: search(query: "(repo:microsoft/playwright OR repo:microsoft/playwright.dev) state:open no:label is:pr -is:draft", type: ISSUE, first: 100) {
+      pullRequests: search(query: "(repo:microsoft/playwright OR repo:microsoft/playwright.dev) state:open no:label is:pr -is:draft", type: ISSUE_ADVANCED, first: 100) {
         nodes {
           ... on PullRequest { ...PullRequestParts }
         }
